@@ -3,6 +3,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import logoImg from "../assets/logo.png";
 import lochImg from "../assets/loch.jpeg";
+import { formatearFechaHora } from "./Fecha";
 
 export function generarNumeroPresupuesto() {
   const ahora = new Date();
@@ -52,7 +53,7 @@ export default function generarPresupuestoPDF(
     doc.line(M, 110, W - M, 110);
   };
 
-  // --- Datos del cliente (solo nombre; sin retiro/devolución) ---
+  // --- Datos del cliente (solo nombre) ---
   const drawClientData = (yStart) => {
     let y = yStart;
     doc.setFontSize(12);
@@ -62,89 +63,37 @@ export default function generarPresupuestoPDF(
     return y + 24;
   };
 
-  // ---- Datos de grupos por día guardados en el carrito (si existen) ----
-  const gruposDias = (() => {
-    try {
-      const raw = localStorage.getItem("gruposDias");
-      return raw ? JSON.parse(raw) : {};
-    } catch {
-      return {};
-    }
-  })();
-  const ORDEN_DIAS = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
-
   drawHeader();
   let cursorY = drawClientData(140);
 
-  // --- Construcción de tabla por día > categoría ---
+  // --- Agrupar por categoría y preparar tabla ---
+  const grupos = {};
+  productosSeleccionados.forEach((item, idxGlobal) => {
+    const cat = item.categoria || "sin categoría";
+    if (!grupos[cat]) grupos[cat] = [];
+    grupos[cat].push({ ...item, __idxGlobal: idxGlobal });
+  });
+
   const headers = ["detalle", "cant.", "jornadas", "p.u.", "subtotal"];
   const body = [];
-
-  const hayGrupos = Object.values(gruposDias).some(arr => Array.isArray(arr) && arr.length > 0);
-
-  if (hayGrupos) {
-    ORDEN_DIAS.forEach(dia => {
-      const itemsDia = Array.isArray(gruposDias[dia]) ? gruposDias[dia] : [];
-      if (!itemsDia.length) return;
-
-      // Fila de día
-      body.push([{ content: `Día: ${dia}`, colSpan: 5, styles: { fillColor: [220,230,255], fontStyle: "bold" } }]);
-
-      // Agrupar por categoría
-      const porCat = {};
-      itemsDia.forEach((it) => {
-        const cat = it.categoria || "sin categoría";
-        if (!porCat[cat]) porCat[cat] = [];
-        porCat[cat].push(it);
-      });
-
-      Object.entries(porCat).forEach(([cat, items]) => {
-        body.push([{ content: cat, colSpan: 5, styles: { fillColor: [235, 235, 235], fontStyle: "bold" } }]);
-        items.forEach((i) => {
-          const qty = parseInt(i.cantidad, 10) || 0;
-          const price = parseFloat(i.precio) || 0;
-          const subtotal = qty * price * 1; // jornada implícita = 1 por día
-          const detalleLines = [i.nombre || "-"];
-          if (i.incluye) detalleLines.push(...String(i.incluye).split("\n"));
-          body.push([
-            detalleLines.join("\n"),
-            qty,
-            1,
-            `$${Number.isFinite(price) ? price.toFixed(0) : "0"}`,
-            `$${Number.isFinite(subtotal) ? subtotal.toFixed(0) : "0"}`
-          ]);
-        });
-      });
+  Object.entries(grupos).forEach(([cat, items]) => {
+    body.push([{ content: cat, colSpan: 5, styles: { fillColor: [235, 235, 235], fontStyle: "bold" } }]);
+    items.forEach((i) => {
+      const qty = parseInt(i.cantidad, 10) || 0;
+      const j = parseInt(jornadasMap[i.__idxGlobal], 10) || 1;
+      const price = parseFloat(i.precio) || 0;
+      const subtotal = qty * price * j;
+      const detalleLines = [i.nombre || "-"];
+      if (i.incluye) detalleLines.push(...String(i.incluye).split("\n"));
+      body.push([
+        detalleLines.join("\n"),
+        qty,
+        j,
+        `$${Number.isFinite(price) ? price.toFixed(0) : "0"}`,
+        `$${Number.isFinite(subtotal) ? subtotal.toFixed(0) : "0"}`
+      ]);
     });
-  } else {
-    // Fallback anterior: solo por categoría (sin día)
-    const grupos = {};
-    (productosSeleccionados || []).forEach((item, idxGlobal) => {
-      const cat = item.categoria || "sin categoría";
-      if (!grupos[cat]) grupos[cat] = [];
-      grupos[cat].push({ ...item, __idxGlobal: idxGlobal });
-    });
-
-    body.push(...Object.entries(grupos).flatMap(([cat, items]) => {
-      const rows = [[{ content: cat, colSpan: 5, styles: { fillColor: [235, 235, 235], fontStyle: "bold" } }]];
-      items.forEach((i) => {
-        const qty = parseInt(i.cantidad, 10) || 0;
-        const j = parseInt(jornadasMap[i.__idxGlobal], 10) || 1;
-        const price = parseFloat(i.precio) || 0;
-        const subtotal = qty * price * j;
-        const detalleLines = [i.nombre || "-"];
-        if (i.incluye) detalleLines.push(...String(i.incluye).split("\n"));
-        rows.push([
-          detalleLines.join("\n"),
-          qty,
-          j,
-          `$${Number.isFinite(price) ? price.toFixed(0) : "0"}`,
-          `$${Number.isFinite(subtotal) ? subtotal.toFixed(0) : "0"}`
-        ]);
-      });
-      return rows;
-    }));
-  }
+  });
 
   autoTable(doc, {
     startY: cursorY,
@@ -165,23 +114,12 @@ export default function generarPresupuestoPDF(
 
   // --- Cálculo de totales ---
   const finalY = doc.lastAutoTable.finalY + 20;
-
-  let totalBruto = 0;
-  if (hayGrupos) {
-    totalBruto = Object.values(gruposDias).flat().reduce((sum, itm) => {
-      const qty = parseInt(itm.cantidad, 10) || 0;
-      const price = parseFloat(itm.precio) || 0;
-      return sum + qty * price * 1; // jornada implícita = 1 por día
-    }, 0);
-  } else {
-    const todos = (productosSeleccionados || []).map((item, __idxGlobal) => ({ ...item, __idxGlobal }));
-    totalBruto = todos.reduce((sum, itm) => {
-      const qty = parseInt(itm.cantidad, 10) || 0;
-      const j = parseInt(jornadasMap[itm.__idxGlobal], 10) || 1;
-      const price = parseFloat(itm.precio) || 0;
-      return sum + qty * price * j;
-    }, 0);
-  }
+  const totalBruto = Object.values(grupos).flat().reduce((sum, itm) => {
+    const qty = parseInt(itm.cantidad, 10) || 0;
+    const j = parseInt(jornadasMap[itm.__idxGlobal], 10) || 1;
+    const price = parseFloat(itm.precio) || 0;
+    return sum + qty * price * j;
+  }, 0);
 
   const appliedDiscount = parseFloat(localStorage.getItem("descuento")) || 0;
   const descuentoMonto = (totalBruto * appliedDiscount) / 100;

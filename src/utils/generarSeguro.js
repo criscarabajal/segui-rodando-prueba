@@ -15,17 +15,10 @@ export function generarNumeroSeguro() {
   return `${fecha}-S${contador}`;
 }
 
-// 🔒 Helper para nombres de archivo seguros
-const sanitize = (s) =>
-  String(s || "")
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // quita acentos
-    .replace(/[^a-zA-Z0-9 _-]/g, "")                 // quita caracteres raros
-    .replace(/\s+/g, " ")                            // colapsa espacios
-    .trim();
-
 export default function generarSeguroPDF(
   cliente,
   productosSeleccionados,
+  atendidoPor,
   numeroSeguro,
   pedidoNumero = "",
   jornadasMap = {}
@@ -33,6 +26,18 @@ export default function generarSeguroPDF(
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const W = doc.internal.pageSize.getWidth();
   const M = 40;
+
+  // Valores seguros para número de pedido / seguro (evita [object Object])
+  const pedidoRef =
+    typeof pedidoNumero === "string" || typeof pedidoNumero === "number"
+      ? String(pedidoNumero)
+      : "";
+  const seguroRef =
+    typeof numeroSeguro === "string" || typeof numeroSeguro === "number"
+      ? String(numeroSeguro)
+      : "";
+
+  const referencia = pedidoRef || seguroRef || "sin-numero";
 
   // —— HEADER ——
   const drawHeader = () => {
@@ -47,10 +52,10 @@ export default function generarSeguroPDF(
     doc.addImage(lochImg, "JPEG", M + logoW + 10, 20, lochW, lochH);
 
     doc.setFontSize(16);
-    doc.text(`${numeroSeguro}`, W - M, 40, { align: "right" });
+    doc.text(`${seguroRef}`, W - M, 40, { align: "right" });
 
     doc.setFontSize(10);
-    doc.text(`Pedido N°: ${pedidoNumero}`, W - M, 88, { align: "right" });
+    doc.text(`Pedido N°: ${pedidoRef || "-"}`, W - M, 88, { align: "right" });
 
     doc.setFillColor(242, 242, 242);
     doc.rect(M, 80, W - 2 * M, 18, "F");
@@ -61,10 +66,13 @@ export default function generarSeguroPDF(
 
   // —— CLIENT DATA ——
   const drawClientData = () => {
+    const nombre = cliente?.nombre || "";
+    const apellido = cliente?.apellido || "";
+    const nombreCompleto = [nombre, apellido].filter(Boolean).join(" ");
+
     doc.setFontSize(9);
-    doc.text(`CLIENTE: ${cliente.nombre} ${cliente.apellido}`, M, 110);
-    doc.text(`D.N.I.: ${cliente.dni}`, M, 125);
-    doc.text(`TEL: ${cliente.telefono}`, M, 140);
+    doc.text(`CLIENTE: ${nombreCompleto}`, M, 110);
+
     doc.text(
       `RETIRO: ${formatearFechaHora(new Date(cliente.fechaRetiro))}`,
       M,
@@ -99,16 +107,16 @@ export default function generarSeguroPDF(
   const body = [];
   Object.entries(grupos).forEach(([cat, items]) => {
     body.push({ _category: cat });
-    items.forEach((i) => {
+    items.forEach(i => {
       const qty = parseInt(i.cantidad, 10) || 0;
       const valorRep = parseFloat(i.valorReposicion) || 0;
       const parcialVal = qty * valorRep;
 
-      const lineas = [i.nombre];
-      if (i.incluye) lineas.push(...i.incluye.split("\n"));
+      const líneas = [i.nombre];
+      if (i.incluye) líneas.push(...i.incluye.split("\n"));
 
       body.push({
-        detalle: lineas.join("\n"),
+        detalle: líneas.join("\n"),
         serie: i.serial || "",
         cantidad: qty,
         valorReposicion: `${valorRep.toFixed(0)} USD`,
@@ -120,32 +128,29 @@ export default function generarSeguroPDF(
   autoTable(doc, {
     startY: 180,
     margin: { top: 180, left: M, right: M },
-    head: [cols.map((c) => c.header)],
-    body: body.map((row) =>
+    head: [cols.map(c => c.header)],
+    body: body.map(row =>
       row._category
         ? [
             {
               content: row._category,
               colSpan: cols.length,
-              styles: { fillColor: [235, 235, 235], fontStyle: "bold" },
-            },
+              styles: { fillColor: [235, 235, 235], fontStyle: "bold" }
+            }
           ]
-        : cols.map((c) => row[c.dataKey])
+        : cols.map(c => row[c.dataKey])
     ),
     styles: { fontSize: 8, cellPadding: 2 },
     theme: "grid",
     headStyles: { fillColor: [230, 230, 230], textColor: [0, 0, 0] },
-    didParseCell: (data) => {
+    didParseCell: data => {
       if (data.row.raw[0] && data.row.raw[1] === undefined) {
         data.cell.colSpan = cols.length;
         data.cell.styles.fillColor = [235, 235, 235];
         data.cell.styles.fontStyle = "bold";
       }
     },
-    didDrawPage: () => {
-      drawHeader();
-      drawClientData();
-    },
+    didDrawPage: () => { drawHeader(); drawClientData(); }
   });
 
   // —— FOOTER TOTAL ——
@@ -174,10 +179,11 @@ export default function generarSeguroPDF(
     { maxWidth: W - 2 * M }
   );
 
-  // —— FILENAME: "Seguro - {Nombre Completo}.pdf" ——
-  const nombreCompleto = sanitize(
-    [cliente?.nombre, cliente?.apellido].filter(Boolean).join(" ")
-  );
-  const filename = `Seguro - ${nombreCompleto}.pdf`;
-  doc.save(filename);
+  // —— NOMBRE DE ARCHIVO (sin undefined / sin [object Object]) ——
+  const nombre = cliente?.nombre || "";
+  const apellido = cliente?.apellido || "";
+  const nombreArchivoCliente =
+    [nombre, apellido].filter(Boolean).join("_") || "cliente";
+
+  doc.save(`Seguro_${nombreArchivoCliente}_${referencia}.pdf`);
 }

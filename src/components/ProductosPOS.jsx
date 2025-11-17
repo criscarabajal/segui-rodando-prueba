@@ -1,8 +1,23 @@
 // src/components/ProductosPOS.jsx
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
-  Box, TextField, MenuItem, Typography, Dialog, DialogTitle, DialogContent, DialogActions,
-  Button, Grid, InputAdornment, IconButton, useTheme, useMediaQuery, Alert, RadioGroup, FormControlLabel, Radio
+  Box,
+  TextField,
+  MenuItem,
+  Typography,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Grid,
+  InputAdornment,
+  IconButton,
+  useTheme,
+  Alert,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -15,37 +30,29 @@ import generarPresupuestoPDF from '../utils/generarPresupuesto';
 import generarSeguroPDF from '../utils/generarSeguro';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
+import logoImg from "../assets/logo.png";
 
 const defaultCats = [
-  'LUCES','GRIPERIA','TELAS','CAMARAS','LENTES',
-  'BATERIAS','MONITOREO','FILTROS','ACCESORIOS DE CAMARA','SONIDO'
+  'LUCES',
+  'GRIPERIA',
+  'TELAS',
+  'CAMARAS',
+  'LENTES',
+  'BATERIAS',
+  'MONITOREO',
+  'FILTROS',
+  'ACCESORIOS DE CAMARA',
+  'SONIDO',
 ];
 
 export default function ProductosPOS() {
   const theme = useTheme();
-  const HEADER = 72;  // alto del header
-  const FOOTER = 72;  // alto del BottomNav
+  const HEADER = 72;
+  const FOOTER = 72;
 
   const CARD_HEIGHT = 180;
   const ROW_GAP = 16;
-
-  // Breakpoints para ajustar columnas del carrusel
-  const downMd = useMediaQuery(theme.breakpoints.down('md'));     // ~tablet
-  const downLg = useMediaQuery(theme.breakpoints.down('lg'));     // ~notebook
-
-  const slidesPerRow = useMemo(() => {
-    if (downMd) return 4;   // tablet
-    if (downLg) return 5;   // notebook
-    return 6;               // escritorio/monitores grandes
-  }, [downMd, downLg]);
-
-  // Ancho del panel izquierdo (carrito) según pantalla
-  const SIDEBAR_W = {
-    sm: '38vw',   // tablet
-    md: '32vw',   // notebook
-    lg: '28vw',   // escritorio
-    xl: '24vw',   // escritorio grande
-  };
+  const SLIDES_PER_ROW = 5;
 
   // ===== Pedido / separador =====
   const [pedidoNumero, setPedidoNumero] = useState('');
@@ -57,20 +64,28 @@ export default function ProductosPOS() {
     const saved = localStorage.getItem('categoriasNav');
     return saved ? JSON.parse(saved) : defaultCats;
   });
-  useEffect(() => { localStorage.setItem('categoriasNav', JSON.stringify(categoriasNav)); }, [categoriasNav]);
+  useEffect(() => {
+    localStorage.setItem('categoriasNav', JSON.stringify(categoriasNav));
+  }, [categoriasNav]);
+
   const [openEditCats, setOpenEditCats] = useState(false);
   const handleOpenEditCats = () => setOpenEditCats(true);
   const handleCloseEditCats = () => setOpenEditCats(false);
   const handleCatChange = (idx, val) =>
-    setCategoriasNav(c => { const cc=[...c]; cc[idx]=val; return cc; });
+    setCategoriasNav((c) => {
+      const cc = [...c];
+      cc[idx] = val;
+      return cc;
+    });
 
   // ===== Productos (fetch + agrupado por nombre con seriales) =====
   const [productosRaw, setProductosRaw] = useState([]);
   const [productos, setProductos] = useState([]);
   const [isSliding, setIsSliding] = useState(false);
+
   useEffect(() => {
     fetchProductos()
-      .then(raw => {
+      .then((raw) => {
         setProductosRaw(raw);
         const grouped = raw.reduce((acc, p) => {
           if (!acc[p.nombre]) {
@@ -85,8 +100,10 @@ export default function ProductosPOS() {
             };
           }
           if (p.serial) acc[p.nombre].seriales.push(p.serial);
-          if (typeof p.valorReposicion === 'number' &&
-              p.valorReposicion > (acc[p.nombre].valorReposicion || 0)) {
+          if (
+            typeof p.valorReposicion === 'number' &&
+            p.valorReposicion > (acc[p.nombre].valorReposicion || 0)
+          ) {
             acc[p.nombre].valorReposicion = p.valorReposicion;
           }
           return acc;
@@ -100,11 +117,13 @@ export default function ProductosPOS() {
   const [buscar, setBuscar] = useState('');
   const [favorita, setFavorita] = useState('');
   const [sugerencias, setSugerencias] = useState([]);
+
   useEffect(() => {
     setSugerencias(
-      productos.filter(p =>
-        p.nombre.toLowerCase().includes(buscar.toLowerCase()) &&
-        (!favorita || p.categoria === favorita)
+      productos.filter(
+        (p) =>
+          p.nombre.toLowerCase().includes(buscar.toLowerCase()) &&
+          (!favorita || p.categoria === favorita)
       )
     );
   }, [productos, buscar, favorita]);
@@ -117,34 +136,48 @@ export default function ProductosPOS() {
     const alto = window.innerHeight - HEADER - FOOTER - ROW_GAP;
     setRows(Math.max(1, Math.floor(alto / (CARD_HEIGHT + ROW_GAP))));
   }, [HEADER, FOOTER]);
+
   useEffect(() => {
     calcularFilas();
     window.addEventListener('resize', calcularFilas);
     return () => window.removeEventListener('resize', calcularFilas);
   }, [calcularFilas]);
-  useEffect(() => { sliderRef.current?.slickGoTo(0); }, [buscar, favorita, rows, sugerencias.length]);
+
+  useEffect(() => {
+    sliderRef.current?.slickGoTo(0);
+  }, [buscar, favorita, rows, sugerencias.length]);
+
   const settings = {
-    arrows: true, infinite: false, rows, slidesPerRow: slidesPerRow, slidesToShow: 1, slidesToScroll: 1,
-    speed: 600, cssEase: 'ease-in-out',
+    arrows: true,
+    infinite: false,
+    rows,
+    slidesPerRow: SLIDES_PER_ROW,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    speed: 600,
+    cssEase: 'ease-in-out',
     beforeChange: (o, n) => o !== n && setIsSliding(true),
-    afterChange: () => setIsSliding(false)
+    afterChange: () => setIsSliding(false),
   };
 
   // ===== Carrito =====
-  const [carrito, setCarrito] = useState(() => JSON.parse(localStorage.getItem('carrito') || '[]'));
-  useEffect(() => { localStorage.setItem('carrito', JSON.stringify(carrito)); }, [carrito]);
+  const [carrito, setCarrito] = useState(() =>
+    JSON.parse(localStorage.getItem('carrito') || '[]')
+  );
+  useEffect(() => {
+    localStorage.setItem('carrito', JSON.stringify(carrito));
+  }, [carrito]);
 
   const agregarAlCarritoConSerial = (prod, serial) => {
-    setCarrito(c => [
+    setCarrito((c) => [
       ...c,
       {
         ...prod,
         serial,
         cantidad: 1,
-        // si grupoActual aún no llegó por timing, usamos comentario
         grupo: (grupoActual || comentario || '').trim(),
         valorReposicion: prod.valorReposicion,
-      }
+      },
     ]);
   };
 
@@ -153,15 +186,9 @@ export default function ProductosPOS() {
   const [pendingProduct, setPendingProduct] = useState(null);
   const [selectedSerial, setSelectedSerial] = useState('');
 
-  // Evitá race condition: habilitá por comentario (input) directamente
-  const faltaGrupo = !(comentario || '').trim();
-
   const handleCardClick = (prod) => {
     if (isSliding) return;
-    if (faltaGrupo) {
-      alert('Primero ingresá un "Día / separador" en el carrito.');
-      return;
-    }
+
     const seriales = Array.isArray(prod.seriales) ? prod.seriales : [];
     if (seriales.length === 0) {
       agregarAlCarritoConSerial(prod, '');
@@ -171,7 +198,6 @@ export default function ProductosPOS() {
       agregarAlCarritoConSerial(prod, seriales[0]);
       return;
     }
-    // 2 o más seriales -> abrimos diálogo para elegir
     setPendingProduct(prod);
     setSelectedSerial(seriales[0] || '');
     setOpenSerialDialog(true);
@@ -196,83 +222,174 @@ export default function ProductosPOS() {
   const [jornadasMap, setJornadasMap] = useState({});
 
   // ===== Cliente =====
-  const initialClienteForm = { nombre: '', dni: '', fechaRetiro: '', fechaDevolucion: '' };
+  const initialClienteForm = {
+    nombre: '',
+    fechaRetiro: '',
+    fechaDevolucion: '',
+  };
+
   const [openCliente, setOpenCliente] = useState(false);
   const handleOpenCliente = () => setOpenCliente(true);
-  const clearClienteForm = () => { setClienteForm(initialClienteForm); setDniInput(''); setClientSuggestion(''); };
-  const handleCloseCliente = () => { clearClienteForm(); setOpenCliente(false); };
-  const [clienteForm, setClienteForm] = useState(JSON.parse(localStorage.getItem('cliente')) || initialClienteForm);
-  const [cliente, setCliente] = useState(JSON.parse(localStorage.getItem('cliente')) || {});
-  const [dniInput, setDniInput] = useState(clienteForm.dni || '');
-  const [clientSuggestion, setClientSuggestion] = useState('');
-  const [clientes] = useState([]);
+  const handleCloseCliente = () => setOpenCliente(false);
 
-  const handleClientSearch = () => {};
-  const handleClienteChange = e => {
+  const [clienteForm, setClienteForm] = useState(initialClienteForm);
+
+  const handleClienteChange = (e) => {
     const { name, value } = e.target;
-    if (name === 'dni') setDniInput(value);
-    setClienteForm(prev => ({ ...prev, [name]: value }));
-    setClientSuggestion('');
+    setClienteForm((prev) => ({ ...prev, [name]: value }));
   };
+
   const handleSaveCliente = () => {
-    const { nombre, fechaRetiro, fechaDevolucion } = clienteForm;
-    if (!nombre || !fechaRetiro || !fechaDevolucion) {
-      alert('Completá nombre, fecha de retiro y fecha de devolución');
-      return;
-    }
-    localStorage.setItem('cliente', JSON.stringify(clienteForm));
-    setCliente(clienteForm);
+    // Ahora NO es obligatorio tener fechas completas para poder guardar
     setOpenCliente(false);
   };
 
   // ===== Generar PDFs =====
   const handleGenerarRemito = () => {
-    if (!cliente?.nombre) { handleOpenCliente(); return; }
     const nro = String(pedidoNumero || '').trim();
-    if (!nro) { alert('Ingresá un "Pedido N°" en el carrito para generar el Remito.'); return; }
-    generarRemitoPDF(cliente, carrito, pedidoNumero, pedidoNumero, jornadasMap, comentario);
+    if (!nro) {
+      alert('Ingresá un "Pedido N°" en el carrito para generar el Remito.');
+      return;
+    }
+
+    const clienteParaPDF = {
+      ...clienteForm,
+      nombre: (clienteForm.nombre || '').trim(),
+    };
+
+    generarRemitoPDF(clienteParaPDF, carrito, nro, nro, jornadasMap, comentario);
   };
 
   const handleGenerarPresupuesto = () => {
-    if (!cliente?.nombre) { handleOpenCliente(); return; }
     const nro = String(pedidoNumero || '').trim();
-    if (!nro) { alert('Ingresá un "Pedido N°" en el carrito para generar el Presupuesto.'); return; }
+    if (!nro) {
+      alert('Ingresá un "Pedido N°" en el carrito para generar el Presupuesto.');
+      return;
+    }
     const fecha = new Date().toLocaleDateString('es-AR');
-    // Firma: (cliente, productos, jornadasMap, fechaEmision, pedidoNumero)
-    generarPresupuestoPDF(cliente, carrito, jornadasMap, fecha, nro);
 
-    // limpiar cliente + inputs
-    setClienteForm(initialClienteForm);
-    setCliente({});
-    setDniInput('');
-    setClientSuggestion('');
-    localStorage.removeItem('cliente');
+    const clienteParaPDF = {
+      ...clienteForm,
+      nombre: (clienteForm.nombre || '').trim(),
+    };
 
-    // limpiar N° pedido y separador
-    setPedidoNumero('');
-    setComentario('');
-    setGrupoActual('');
+    // (cliente, productosSeleccionados, jornadasMap, fechaEmision, pedidoNumero)
+    generarPresupuestoPDF(clienteParaPDF, carrito, jornadasMap, fecha, nro);
+
+    // 👇 Reiniciar contador de jornadas en "Detalles de productos"
+    setJornadasMap({});
   };
 
   const handleGenerarSeguro = () => {
-    if (!cliente.nombre) { handleOpenCliente(); return; }
+    const nro = String(pedidoNumero || '').trim();
+    if (!nro) {
+      alert('Ingresá un "Pedido N°" en el carrito para generar el Seguro.');
+      return;
+    }
     const fecha = new Date().toLocaleDateString('es-AR');
-    generarSeguroPDF(cliente, carrito, fecha, pedidoNumero);
+
+    const clienteParaPDF = {
+      ...clienteForm,
+      nombre: (clienteForm.nombre || '').trim(),
+    };
+
+    // (cliente, productosSeleccionados, atendidoPor, numeroSeguro, pedidoNumero, jornadasMap)
+    generarSeguroPDF(clienteParaPDF, carrito, fecha, nro, nro, jornadasMap);
   };
 
   return (
     <Box>
-      {/* Header búsqueda */}
-      <Box sx={{ position: 'fixed', top: 0, left: 0, right: 0, height: HEADER, bgcolor: 'grey.900', display: 'flex', alignItems: 'center', px: 2, zIndex: 1200 }}>
-        <TextField
-          size="small" variant="outlined" placeholder="Buscar producto"
-          value={buscar} onChange={e => setBuscar(e.target.value)}
-          InputProps={{ endAdornment: (<InputAdornment position="end"><SearchIcon /></InputAdornment>) }}
-          sx={{
-            width: { sm: '46vw', md: '36vw', lg: '28vw', xl: '24vw' },
-            bgcolor: 'grey.800', borderRadius: 1
-          }}
-        />
+      {/* HEADER búsqueda + nombre + logo */}
+      <Box
+        sx={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: HEADER,
+          bgcolor: 'grey.900',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          px: 2,
+          zIndex: 1200,
+        }}
+      >
+        <Box sx={{ width: '100%', position: 'relative', height: '100%' }}>
+          {/* 🟩 NOMBRE (IZQUIERDA) */}
+          <Box
+            sx={{
+              position: 'absolute',
+              left: 20,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              width: '20vw',
+            }}
+          >
+            <TextField
+              size="small"
+              variant="outlined"
+              label="Nombre"
+              value={clienteForm.nombre || ''}
+              onChange={(e) =>
+                setClienteForm((prev) => ({ ...prev, nombre: e.target.value }))
+              }
+              InputLabelProps={{ shrink: true }}
+              sx={{
+                bgcolor: 'grey.800',
+                borderRadius: 1,
+                '& .MuiOutlinedInput-input': { color: '#fff' },
+                '& .MuiInputLabel-root': { color: '#bbb' },
+              }}
+            />
+          </Box>
+
+          {/* 🟦 BUSCADOR (CENTRO) */}
+          <Box
+            sx={{
+              position: 'absolute',
+              left: '50%',
+              top: '50%',
+              transform: 'translate(-50%, -50%)',
+            }}
+          >
+            <TextField
+              size="small"
+              variant="outlined"
+              placeholder="Buscar producto"
+              value={buscar}
+              onChange={(e) => setBuscar(e.target.value)}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <SearchIcon />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{ width: '28vw', bgcolor: 'grey.800', borderRadius: 1 }}
+            />
+          </Box>
+
+          {/* 🟥 LOGO (DERECHA) */}
+          <Box
+            sx={{
+              position: 'absolute',
+              right: 20,
+              top: '50%',
+              transform: 'translateY(-50%)',
+            }}
+          >
+            <img
+              src={logoImg}
+              alt="logo"
+              style={{
+                height: '70px',
+                padding: '8px 0',
+                opacity: 0.9,
+              }}
+            />
+          </Box>
+        </Box>
       </Box>
 
       {/* Carrito */}
@@ -282,19 +399,51 @@ export default function ProductosPOS() {
           top: HEADER,
           bottom: FOOTER,
           left: 0,
-          width: { sm: SIDEBAR_W.sm, md: SIDEBAR_W.md, lg: SIDEBAR_W.lg, xl: SIDEBAR_W.xl },
-          p: { sm: 1.5, md: 2 },
+          width: '30vw',
+          p: 2,
           bgcolor: 'grey.900',
           overflowY: 'auto',
-          zIndex: 1000
+          zIndex: 1000,
         }}
       >
         <Carrito
           productosSeleccionados={carrito}
-          onIncrementar={i => { const c=[...carrito]; c[i].cantidad++; setCarrito(c); }}
-          onDecrementar={i => { const c=[...carrito]; if (c[i].cantidad>1) c[i].cantidad--; setCarrito(c); }}
-          onCantidadChange={(i,v) => { const c=[...carrito]; c[i].cantidad = v===''? '' : Math.max(1, parseInt(v,10)); setCarrito(c); }}
-          onEliminar={i => { const c=[...carrito]; c.splice(i,1); setCarrito(c); }}
+          onIncrementar={i => {
+            const c = [...carrito];
+            c[i].cantidad++;
+            setCarrito(c);
+          }}
+          onDecrementar={i => {
+            const c = [...carrito];
+            if (c[i].cantidad > 1) c[i].cantidad--;
+            setCarrito(c);
+          }}
+          onCantidadChange={(i, v) => {
+            const c = [...carrito];
+            c[i].cantidad = v === '' ? '' : Math.max(1, parseInt(v, 10));
+            setCarrito(c);
+          }}
+          onEliminar={i => {
+            const c = [...carrito];
+            c.splice(i, 1);
+            setCarrito(c);
+
+            // 🔁 Reindexar jornadasMap para que los índices sigan matcheando
+            setJornadasMap(prev => {
+              const next = {};
+              Object.keys(prev).forEach(kStr => {
+                const k = parseInt(kStr, 10);
+                if (Number.isNaN(k)) return;
+                if (k < i) {
+                  next[k] = prev[k];        // mismos índices antes del borrado
+                } else if (k > i) {
+                  next[k - 1] = prev[k];    // corremos uno hacia atrás
+                }
+                // si k === i lo saltamos (era el que se borró)
+              });
+              return next;
+            });
+          }}
           jornadasMap={jornadasMap}
           setJornadasMap={setJornadasMap}
           comentario={comentario}
@@ -303,8 +452,12 @@ export default function ProductosPOS() {
           setPedidoNumero={setPedidoNumero}
           grupoActual={grupoActual}
           setGrupoActual={setGrupoActual}
-          onClearAll={() => setCarrito([])}
+          onClearAll={() => {
+            setCarrito([]);
+            setJornadasMap({}); // 🧹 limpias también las jornadas
+          }}
         />
+
       </Box>
 
       {/* Productos + filtros */}
@@ -313,22 +466,32 @@ export default function ProductosPOS() {
           position: 'fixed',
           top: HEADER,
           bottom: FOOTER,
-          left: { sm: SIDEBAR_W.sm, md: SIDEBAR_W.md, lg: SIDEBAR_W.lg, xl: SIDEBAR_W.xl },
+          left: '30vw',
           right: 0,
           bgcolor: 'grey.800',
           overflowY: 'auto',
-          zIndex: 900
+          zIndex: 900,
         }}
       >
         {/* Categorías */}
-        <Box sx={{ position: 'sticky', top: 0, zIndex: 1300, px: { sm: 1, md: 1.5 }, py: 1, bgcolor: 'grey.800' }}>
-          {!(comentario || '').trim() && (
-            <Alert severity="info" variant="outlined" sx={{ mb: 1 }}>
-              Seleccioná un <strong>Día </strong> en el carrito para poder agregar productos.
-            </Alert>
-          )}
-
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+        <Box
+          sx={{
+            position: 'sticky',
+            top: 0,
+            zIndex: 1300,
+            px: 1,
+            py: 1,
+            bgcolor: 'grey.800',
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              flexWrap: 'wrap',
+            }}
+          >
             <Button
               size="small"
               variant={!favorita ? 'contained' : 'outlined'}
@@ -342,13 +505,19 @@ export default function ProductosPOS() {
                 key={i}
                 size="small"
                 variant={favorita === cat ? 'contained' : 'outlined'}
-                onClick={() => setFavorita(favorita === cat ? '' : cat)}
+                onClick={() =>
+                  setFavorita(favorita === cat ? '' : cat)
+                }
               >
                 {cat}
               </Button>
             ))}
 
-            <IconButton size="small" sx={{ ml: 'auto' }} onClick={handleOpenEditCats}>
+            <IconButton
+              size="small"
+              sx={{ ml: 'auto' }}
+              onClick={handleOpenEditCats}
+            >
               <MoreVertIcon sx={{ color: '#fff' }} />
             </IconButton>
           </Box>
@@ -365,14 +534,26 @@ export default function ProductosPOS() {
                   bgcolor: 'grey.700',
                   borderRadius: 1,
                   p: 1.5,
-                  display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-                  cursor: (isSliding || !(comentario || '').trim()) ? 'not-allowed' : 'pointer',
-                  opacity: !(comentario || '').trim() ? 0.6 : 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  cursor: isSliding ? 'not-allowed' : 'pointer',
+                  opacity: isSliding ? 0.6 : 1,
                   pointerEvents: isSliding ? 'none' : 'auto',
-                  '&:hover': { bgcolor: !(isSliding || !(comentario || '').trim()) ? 'grey.600' : 'grey.700' }
+                  '&:hover': {
+                    bgcolor: 'grey.600',
+                  },
                 }}
               >
-                <Typography variant="subtitle1" sx={{ fontWeight: 600, lineHeight: 1.2, whiteSpace: 'normal', wordBreak: 'break-word' }}>
+                <Typography
+                  variant="subtitle1"
+                  sx={{
+                    fontWeight: 600,
+                    lineHeight: 1.2,
+                    whiteSpace: 'normal',
+                    wordBreak: 'break-word',
+                  }}
+                >
                   {p.nombre}
                 </Typography>
                 <Typography variant="h6" sx={{ fontWeight: 500 }}>
@@ -396,34 +577,28 @@ export default function ProductosPOS() {
               variant="outlined"
               label={`Categoría ${idx + 1}`}
               value={cat}
-              onChange={e => handleCatChange(idx, e.target.value)}
+              onChange={(e) => handleCatChange(idx, e.target.value)}
               sx={{ mb: 2 }}
             />
           ))}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseEditCats} variant="contained">Guardar</Button>
+          <Button onClick={handleCloseEditCats} variant="contained">
+            Guardar
+          </Button>
         </DialogActions>
       </Dialog>
 
       {/* Diálogo Datos del Cliente */}
-      <Dialog open={openCliente} onClose={handleCloseCliente} fullWidth maxWidth="md">
+      <Dialog
+        open={openCliente}
+        onClose={handleCloseCliente}
+        fullWidth
+        maxWidth="md"
+      >
         <DialogTitle>Datos del Cliente</DialogTitle>
         <DialogContent>
           <Grid container spacing={2}>
-            {/* Nombre */}
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                size="small"
-                variant="outlined"
-                name="nombre"
-                label="Nombre"
-                value={clienteForm.nombre || ''}
-                onChange={handleClienteChange}
-              />
-            </Grid>
-
             {/* Fecha Retiro */}
             <Grid item xs={12} sm={6}>
               <TextField
@@ -456,11 +631,13 @@ export default function ProductosPOS() {
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleSaveCliente} variant="contained">Guardar</Button>
+          <Button onClick={handleSaveCliente} variant="contained">
+            Guardar
+          </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Dialogo de selección de serie */}
+      {/* Diálogo selección de serie */}
       <Dialog open={openSerialDialog} onClose={handleCloseSerialDialog}>
         <DialogTitle>Seleccionar N° de Serie</DialogTitle>
         <DialogContent dividers>
@@ -472,13 +649,22 @@ export default function ProductosPOS() {
             onChange={(e) => setSelectedSerial(e.target.value)}
           >
             {(pendingProduct?.seriales || []).map((s, idx) => (
-              <FormControlLabel key={idx} value={s} control={<Radio />} label={s} />
+              <FormControlLabel
+                key={idx}
+                value={s}
+                control={<Radio />}
+                label={s}
+              />
             ))}
           </RadioGroup>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseSerialDialog}>Cancelar</Button>
-          <Button variant="contained" onClick={handleConfirmSerial} disabled={!selectedSerial}>
+          <Button
+            variant="contained"
+            onClick={handleConfirmSerial}
+            disabled={!selectedSerial}
+          >
             Agregar
           </Button>
         </DialogActions>
@@ -491,19 +677,18 @@ export default function ProductosPOS() {
         onGenerarPresupuesto={handleGenerarPresupuesto}
         onGenerarSeguro={handleGenerarSeguro}
         onCancelar={() => {
-          if (window.confirm("¿Seguro que querés cancelar TODO el pedido? Esta acción no se puede deshacer.")) {
-            // Limpia estados locales del pedido
+          if (
+            window.confirm(
+              '¿Seguro que querés cancelar TODO el pedido? Esta acción no se puede deshacer.'
+            )
+          ) {
             setCarrito([]);
-            setCliente({});
-            setClienteForm({ nombre: "", fechaRetiro: "", fechaDevolucion: "" });
-            setPedidoNumero("");
+            setClienteForm(initialClienteForm);
+            setPedidoNumero('');
             setJornadasMap({});
-            setComentario("");
-
-            // Limpia absolutamente todo el localStorage de la app
+            setComentario('');
+            setGrupoActual('');
             localStorage.clear();
-
-            // Recarga para reinicializar cualquier estado interno (p.ej. checkboxes de días del Carrito)
             window.location.reload();
           }
         }}
