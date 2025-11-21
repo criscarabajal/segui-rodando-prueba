@@ -225,6 +225,12 @@ export default function Carrito({
           value={discount}
           onChange={e => setDiscount(e.target.value)}
           sx={{ bgcolor: '#2c2c2c', borderRadius: 1 }}
+          SelectProps={{
+            MenuProps: {
+              anchorOrigin: { vertical: 'top', horizontal: 'left' },
+              transformOrigin: { vertical: 'bottom', horizontal: 'left' }
+            }
+          }}
         >
           <MenuItem value="0">Ninguno</MenuItem>
           <MenuItem value="10">10%</MenuItem>

@@ -30,7 +30,7 @@ import generarPresupuestoPDF from '../utils/generarPresupuesto';
 import generarSeguroPDF from '../utils/generarSeguro';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
-import logoImg from "../assets/logo.png";
+import logoImg from '../assets/logo.png';
 
 const defaultCats = [
   'LUCES',
@@ -56,7 +56,6 @@ export default function ProductosPOS() {
 
   // ===== Pedido / separador =====
   const [pedidoNumero, setPedidoNumero] = useState('');
-  const [comentario, setComentario] = useState('');
   const [grupoActual, setGrupoActual] = useState(''); // Día/separador activo
 
   // ===== Categorías nav (editables) =====
@@ -175,7 +174,7 @@ export default function ProductosPOS() {
         ...prod,
         serial,
         cantidad: 1,
-        grupo: (grupoActual || comentario || '').trim(),
+        grupo: (grupoActual || '').trim(),
         valorReposicion: prod.valorReposicion,
       },
     ]);
@@ -233,6 +232,7 @@ export default function ProductosPOS() {
   const handleCloseCliente = () => setOpenCliente(false);
 
   const [clienteForm, setClienteForm] = useState(initialClienteForm);
+  const [cliente, setCliente] = useState({}); // se mantiene pero ya no va a localStorage
 
   const handleClienteChange = (e) => {
     const { name, value } = e.target;
@@ -240,7 +240,8 @@ export default function ProductosPOS() {
   };
 
   const handleSaveCliente = () => {
-    // Ahora NO es obligatorio tener fechas completas para poder guardar
+    // Ya no es obligatorio completar nombre/fechas para cerrar
+    setCliente(clienteForm);
     setOpenCliente(false);
   };
 
@@ -257,7 +258,7 @@ export default function ProductosPOS() {
       nombre: (clienteForm.nombre || '').trim(),
     };
 
-    generarRemitoPDF(clienteParaPDF, carrito, nro, nro, jornadasMap, comentario);
+    generarRemitoPDF(clienteParaPDF, carrito, nro, nro, jornadasMap,);
   };
 
   const handleGenerarPresupuesto = () => {
@@ -298,8 +299,15 @@ export default function ProductosPOS() {
   };
 
   return (
-    <Box>
-      {/* HEADER búsqueda + nombre + logo */}
+    <Box
+      sx={{
+        width: '100vw',
+        height: '100vh',
+        overflow: 'hidden',
+        bgcolor: 'grey.900',
+      }}
+    >
+      {/* HEADER: nombre (izq) + buscador (centro) + logo (der) */}
       <Box
         sx={{
           position: 'fixed',
@@ -316,7 +324,7 @@ export default function ProductosPOS() {
         }}
       >
         <Box sx={{ width: '100%', position: 'relative', height: '100%' }}>
-          {/* 🟩 NOMBRE (IZQUIERDA) */}
+          {/* Nombre cliente (izquierda) */}
           <Box
             sx={{
               position: 'absolute',
@@ -329,7 +337,7 @@ export default function ProductosPOS() {
             <TextField
               size="small"
               variant="outlined"
-              label="Nombre"
+              placeholder="Nombre"
               value={clienteForm.nombre || ''}
               onChange={(e) =>
                 setClienteForm((prev) => ({ ...prev, nombre: e.target.value }))
@@ -344,7 +352,7 @@ export default function ProductosPOS() {
             />
           </Box>
 
-          {/* 🟦 BUSCADOR (CENTRO) */}
+          {/* Buscador (centro) */}
           <Box
             sx={{
               position: 'absolute',
@@ -370,7 +378,7 @@ export default function ProductosPOS() {
             />
           </Box>
 
-          {/* 🟥 LOGO (DERECHA) */}
+          {/* Logo (derecha) */}
           <Box
             sx={{
               position: 'absolute',
@@ -408,12 +416,12 @@ export default function ProductosPOS() {
       >
         <Carrito
           productosSeleccionados={carrito}
-          onIncrementar={i => {
+          onIncrementar={(i) => {
             const c = [...carrito];
             c[i].cantidad++;
             setCarrito(c);
           }}
-          onDecrementar={i => {
+          onDecrementar={(i) => {
             const c = [...carrito];
             if (c[i].cantidad > 1) c[i].cantidad--;
             setCarrito(c);
@@ -423,21 +431,21 @@ export default function ProductosPOS() {
             c[i].cantidad = v === '' ? '' : Math.max(1, parseInt(v, 10));
             setCarrito(c);
           }}
-          onEliminar={i => {
+          onEliminar={(i) => {
             const c = [...carrito];
             c.splice(i, 1);
             setCarrito(c);
 
             // 🔁 Reindexar jornadasMap para que los índices sigan matcheando
-            setJornadasMap(prev => {
+            setJornadasMap((prev) => {
               const next = {};
-              Object.keys(prev).forEach(kStr => {
+              Object.keys(prev).forEach((kStr) => {
                 const k = parseInt(kStr, 10);
                 if (Number.isNaN(k)) return;
                 if (k < i) {
-                  next[k] = prev[k];        // mismos índices antes del borrado
+                  next[k] = prev[k]; // mismos índices antes del borrado
                 } else if (k > i) {
-                  next[k - 1] = prev[k];    // corremos uno hacia atrás
+                  next[k - 1] = prev[k]; // corremos uno hacia atrás
                 }
                 // si k === i lo saltamos (era el que se borró)
               });
@@ -446,8 +454,6 @@ export default function ProductosPOS() {
           }}
           jornadasMap={jornadasMap}
           setJornadasMap={setJornadasMap}
-          comentario={comentario}
-          setComentario={setComentario}
           pedidoNumero={pedidoNumero}
           setPedidoNumero={setPedidoNumero}
           grupoActual={grupoActual}
@@ -457,7 +463,6 @@ export default function ProductosPOS() {
             setJornadasMap({}); // 🧹 limpias también las jornadas
           }}
         />
-
       </Box>
 
       {/* Productos + filtros */}
@@ -632,8 +637,7 @@ export default function ProductosPOS() {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleSaveCliente} variant="contained">
-            Guardar
-          </Button>
+            Guardar</Button>
         </DialogActions>
       </Dialog>
 
@@ -683,10 +687,10 @@ export default function ProductosPOS() {
             )
           ) {
             setCarrito([]);
+            setCliente({});
             setClienteForm(initialClienteForm);
             setPedidoNumero('');
             setJornadasMap({});
-            setComentario('');
             setGrupoActual('');
             localStorage.clear();
             window.location.reload();

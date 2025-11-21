@@ -6,8 +6,8 @@ export default function BottomNav({
   onOpenCliente = () => {},
   onGenerarRemito = () => {},
   onGenerarPresupuesto = () => {},
+  onGenerarSeguro = () => {},      // ✅ AGREGADO
   onCancelar = () => {},
-  onOpenSeguros = () => {}
 }) {
   return (
     <Box
@@ -16,24 +16,39 @@ export default function BottomNav({
         left: 0,
         right: 0,
         bottom: 0,
-        height: '72px',            // alto fijo para que coincida con FOOTER=72
+        height: '72px',
         bgcolor: 'grey.900',
         borderTop: '1px solid #333',
         display: 'flex',
         alignItems: 'center',
         gap: { sm: 0.5, md: 1 },
         px: { sm: 1, md: 2 },
-        zIndex: 2000,              // por encima de todo
-        pointerEvents: 'auto',     // asegura que reciba clics
+        zIndex: 2000,
+        pointerEvents: 'auto',
         boxShadow: '0 -4px 10px rgba(0,0,0,0.35)',
-        overflowX: 'auto'          // permite desplazar si el ancho no alcanza
+        overflowX: 'auto',
       }}
     >
-      <Button variant="outlined" onClick={onOpenCliente} sx={{ whiteSpace: 'nowrap' }}>Datos Cliente</Button>
-      <Button variant="outlined" color="info" onClick={onOpenSeguros} sx={{ whiteSpace: 'nowrap' }}>Seguros</Button>
-      <Button variant="contained" onClick={onGenerarRemito} sx={{ whiteSpace: 'nowrap' }}>Remito</Button>
-      <Button variant="contained" color="success" onClick={onGenerarPresupuesto} sx={{ whiteSpace: 'nowrap' }}>Presupuesto</Button>
-      <Button variant="text" color="error" sx={{ ml: 'auto' }} onClick={onCancelar}>Cancelar</Button>
+      <Button variant="outlined" onClick={onOpenCliente} sx={{ whiteSpace: 'nowrap' }}>
+        Datos Cliente
+      </Button>
+
+      {/* ✅ AHORA EL BOTÓN LLAMA A onGenerarSeguro */}
+      <Button variant="outlined" color="info" onClick={onGenerarSeguro} sx={{ whiteSpace: 'nowrap' }}>
+        Seguros
+      </Button>
+
+      <Button variant="contained" onClick={onGenerarRemito} sx={{ whiteSpace: 'nowrap' }}>
+        Remito
+      </Button>
+
+      <Button variant="contained" color="success" onClick={onGenerarPresupuesto} sx={{ whiteSpace: 'nowrap' }}>
+        Presupuesto
+      </Button>
+
+      <Button variant="text" color="error" sx={{ ml: 'auto' }} onClick={onCancelar}>
+        Cancelar
+      </Button>
     </Box>
   );
 }
