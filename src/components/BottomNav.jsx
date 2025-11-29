@@ -29,9 +29,6 @@ export default function BottomNav({
         overflowX: 'auto',
       }}
     >
-      <Button variant="outlined" onClick={onOpenCliente} sx={{ whiteSpace: 'nowrap' }}>
-        Datos Cliente
-      </Button>
 
       {/* ✅ AHORA EL BOTÓN LLAMA A onGenerarSeguro */}
       <Button variant="outlined" color="info" onClick={onGenerarSeguro} sx={{ whiteSpace: 'nowrap' }}>

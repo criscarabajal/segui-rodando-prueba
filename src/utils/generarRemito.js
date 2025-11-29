@@ -77,8 +77,6 @@ export default function generarRemitoPDF(
   const drawClientData = () => {
     doc.setFontSize(9);
     doc.text(`CLIENTE: ${cliente.nombre || ""} ${cliente.apellido || ""}`, M, 110);
-    doc.text(`D.N.I.: ${cliente.dni || ""}`, M, 125);
-    doc.text(`TEL: ${cliente.telefono || ""}`, M, 140);
     doc.text(
       `RETIRO: ${formatearFechaHora(new Date(cliente.fechaRetiro || ""))}`,
       M,

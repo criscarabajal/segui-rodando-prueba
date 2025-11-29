@@ -1,4 +1,3 @@
-// src/components/Carrito.jsx
 import React, { useEffect, useState } from 'react';
 import {
   Box,
@@ -26,24 +25,24 @@ export default function Carrito({
   onEliminar,
   jornadasMap,
   setJornadasMap,
-  comentario,            // ← viene del padre
-  setComentario,         // ← viene del padre
   pedidoNumero,
   setPedidoNumero,
+  comentario,
+  setComentario,
+  grupoActual,
+  setGrupoActual,
   onClearAll
 }) {
   const [discount, setDiscount] = useState('0');
   const [appliedDiscount, setAppliedDiscount] = useState(0);
   const [openIncludes, setOpenIncludes] = useState(false);
   const [serialMap, setSerialMap] = useState({});
-  const [massJornadas, setMassJornadas] = useState(''); // ✅ valor para aplicar a todas
+  const [massJornadas, setMassJornadas] = useState('');
 
-  // Guardar descuento
   useEffect(() => {
     localStorage.setItem('descuento', JSON.stringify(appliedDiscount));
   }, [appliedDiscount]);
 
-  // Inicializar serialMap al abrir detalles
   useEffect(() => {
     if (!openIncludes) return;
     const init = {};
@@ -67,9 +66,6 @@ export default function Carrito({
     setAppliedDiscount(pct);
   };
 
-  const handleAccept = () => setOpenIncludes(false);
-
-  // ✅ helpers para jornadas masivas
   const bumpAllJornadas = (delta) => {
     setJornadasMap(prev => {
       const next = { ...prev };
@@ -80,6 +76,7 @@ export default function Carrito({
       return next;
     });
   };
+
   const applyAllJornadas = (val) => {
     const v = Math.max(1, parseInt(val, 10) || 1);
     setJornadasMap(prev => {
@@ -89,13 +86,13 @@ export default function Carrito({
     });
   };
 
-  // Cálculo de totales
   const totalConJornadas = productosSeleccionados.reduce((sum, item, idx) => {
     const qty = parseInt(item.cantidad, 10) || 0;
     const j = parseInt(jornadasMap[idx], 10) || 1;
     const price = parseFloat(item.precio) || 0;
     return sum + qty * price * j;
   }, 0);
+
   const discountAmount = totalConJornadas * (appliedDiscount / 100);
   const finalTotal = totalConJornadas - discountAmount;
   const totalWithIva = finalTotal * 1.21;
@@ -112,8 +109,7 @@ export default function Carrito({
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        borderRadius: 2,
-        fontSize: '0.875rem'
+        borderRadius: 2
       }}
     >
       {/* Header pedido */}
@@ -121,6 +117,7 @@ export default function Carrito({
         <Typography variant="h6" sx={{ fontSize: '1rem', whiteSpace: 'nowrap' }}>
           Pedido N°
         </Typography>
+
         <TextField
           size="small"
           variant="outlined"
@@ -135,7 +132,6 @@ export default function Carrito({
           }}
         />
 
-        {/* Comentario arriba de todo */}
         <TextField
           size="small"
           placeholder="Comentario…"
@@ -149,7 +145,6 @@ export default function Carrito({
             '& .MuiOutlinedInput-notchedOutline': { borderColor: '#555' },
             '& .MuiInputBase-input': { color: '#fff', py: '6px' }
           }}
-          inputProps={{ maxLength: 200 }}
         />
 
         <IconButton size="small" onClick={() => setOpenIncludes(true)}>
@@ -157,7 +152,7 @@ export default function Carrito({
         </IconButton>
       </Box>
 
-      {/* Lista de ítems */}
+      {/* Lista */}
       <List sx={{ flex: 1, overflowY: 'auto' }}>
         {ordenados.map(({ p: item, i: idx }) => (
           <React.Fragment key={idx}>
@@ -184,8 +179,12 @@ export default function Carrito({
               >
                 {item.nombre}
               </Typography>
+
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <IconButton size="small" onClick={() => onDecrementar(idx)}><Remove /></IconButton>
+                <IconButton size="small" onClick={() => onDecrementar(idx)}>
+                  <Remove />
+                </IconButton>
+
                 <TextField
                   value={item.cantidad}
                   onChange={e => onCantidadChange(idx, e.target.value)}
@@ -193,10 +192,17 @@ export default function Carrito({
                   inputProps={{ style: { textAlign: 'center', width: 32 } }}
                   sx={{ bgcolor: '#2c2c2c', borderRadius: 1 }}
                 />
-                <IconButton size="small" onClick={() => onIncrementar(idx)}><Add /></IconButton>
-                <IconButton size="small" color="error" onClick={() => onEliminar(idx)}><Delete /></IconButton>
+
+                <IconButton size="small" onClick={() => onIncrementar(idx)}>
+                  <Add />
+                </IconButton>
+
+                <IconButton size="small" color="error" onClick={() => onEliminar(idx)}>
+                  <Delete />
+                </IconButton>
               </Box>
             </ListItem>
+
             <Divider sx={{ borderColor: '#333', mb: 1 }} />
           </React.Fragment>
         ))}
@@ -205,18 +211,25 @@ export default function Carrito({
       {/* Totales */}
       <Box mt={1} textAlign="right">
         <Typography>Subtotal: ${totalConJornadas.toLocaleString()}</Typography>
+
         {appliedDiscount > 0 && (
           <>
-            <Typography variant="body2">Descuento ({appliedDiscount}%): -${discountAmount.toLocaleString()}</Typography>
-            <Typography fontWeight="bold">Total: ${finalTotal.toLocaleString()}</Typography>
+            <Typography variant="body2">
+              Descuento ({appliedDiscount}%): -${discountAmount.toLocaleString()}
+            </Typography>
+            <Typography fontWeight="bold">
+              Total: ${finalTotal.toLocaleString()}
+            </Typography>
           </>
         )}
+
         <Typography fontWeight="bold" mt={1}>
-          Total + IVA (21%): ${totalWithIva.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+          Total + IVA (21%): $
+          {totalWithIva.toLocaleString(undefined, { minimumFractionDigits: 2 })}
         </Typography>
       </Box>
 
-      {/* Descuento / borrar */}
+      {/* Descuentos */}
       <Box mt={2} display="flex" flexDirection="column" gap={1}>
         <TextField
           select
@@ -224,13 +237,14 @@ export default function Carrito({
           size="small"
           value={discount}
           onChange={e => setDiscount(e.target.value)}
-          sx={{ bgcolor: '#2c2c2c', borderRadius: 1 }}
           SelectProps={{
             MenuProps: {
-              anchorOrigin: { vertical: 'top', horizontal: 'left' },
-              transformOrigin: { vertical: 'bottom', horizontal: 'left' }
+              PaperProps: {
+                sx: { transform: 'translateY(-80%)' }  // despliega hacia arriba
+              }
             }
           }}
+          sx={{ bgcolor: '#2c2c2c', borderRadius: 1 }}
         >
           <MenuItem value="0">Ninguno</MenuItem>
           <MenuItem value="10">10%</MenuItem>
@@ -238,21 +252,28 @@ export default function Carrito({
           <MenuItem value="25">25%</MenuItem>
           <MenuItem value="especial">Especial</MenuItem>
         </TextField>
+
         <Button variant="contained" size="small" onClick={handleApplyDiscount}>
           Aplicar descuento
         </Button>
+
         <Button variant="outlined" color="error" size="small" onClick={onClearAll}>
           Borrar todo
         </Button>
       </Box>
 
-      {/* Diálogo Detalles de productos */}
-      <Dialog open={openIncludes} onClose={() => setOpenIncludes(false)} maxWidth="lg" PaperProps={{ sx: { width: '80vw', height: '80vh' } }}>
+      {/* 🔥 DIALOG DETALLES DE PRODUCTOS */}
+      <Dialog
+        open={openIncludes}
+        onClose={() => setOpenIncludes(false)}
+        maxWidth="lg"
+        PaperProps={{ sx: { width: '80vw', height: '80vh' } }}
+      >
         <DialogTitle>Detalles de productos</DialogTitle>
         <DialogContent dividers sx={{ overflowY: 'auto' }}>
           {productosSeleccionados.length ? (
             <>
-              {/* ✅ Controles masivos de jornadas */}
+              {/* Controles masivos */}
               <Box
                 sx={{
                   display: 'flex',
@@ -265,7 +286,9 @@ export default function Carrito({
                   bgcolor: '#222'
                 }}
               >
-                <Typography sx={{ mr: 1, fontWeight: 600 }}>Jornadas (todas):</Typography>
+                <Typography sx={{ mr: 1, fontWeight: 600 }}>
+                  Jornadas (todas):
+                </Typography>
 
                 <IconButton size="small" onClick={() => bumpAllJornadas(-1)}>
                   <Remove fontSize="small" />
@@ -295,8 +318,11 @@ export default function Carrito({
                 </Button>
               </Box>
 
+              {/* LISTA DETALLADA */}
               {productosSeleccionados.map((item, idx) => {
                 const j = jornadasMap[idx] || 1;
+                const qty = parseInt(item.cantidad, 10) || 1;
+
                 return (
                   <Box
                     key={idx}
@@ -312,20 +338,98 @@ export default function Carrito({
                       bgcolor: '#2a2a2a'
                     }}
                   >
+                    {/* izquierda */}
                     <Box>
                       <Typography fontWeight={600}>{item.nombre}</Typography>
-                      <Typography variant="body2">{item.incluye || 'Sin info.'}</Typography>
+                      <Typography variant="body2">
+                        {item.incluye || 'Sin info.'}
+                      </Typography>
                     </Box>
-                    <Box display="flex" flexDirection="column" alignItems="center">
-                      <Typography variant="caption" color="gray">Jornadas</Typography>
-                      <Box display="flex" alignItems="center" sx={{ border: '1px dashed gray', borderRadius: 1, p: '2px 4px', bgcolor: '#1e1e1e' }}>
-                        <IconButton size="small" onClick={() =>
-                          setJornadasMap(prev => ({ ...prev, [idx]: Math.max(1, (prev[idx]||1)-1) }))
-                        }><Remove fontSize="small" /></IconButton>
-                        <Typography mx={0.5}>{j}</Typography>
-                        <IconButton size="small" onClick={() =>
-                          setJornadasMap(prev => ({ ...prev, [idx]: (prev[idx]||1)+1 }))
-                        }><Add fontSize="small" /></IconButton>
+
+                    {/* 🔥 CANTIDAD + JORNADAS EN LA MISMA FILA */}
+                    <Box
+                      display="flex"
+                      flexDirection="row"
+                      alignItems="center"
+                      gap={3}
+                      
+                    >
+                      {/* Cantidad */}
+                      <Box display="flex" flexDirection="column" alignItems="center">
+                        <Typography variant="caption" color="gray">
+                          Cantidad
+                        </Typography>
+                        <Box
+                          display="flex"
+                          alignItems="center"
+                          sx={{
+                            border: '1px dashed gray',
+                            borderRadius: 1,
+                            p: '2px 4px',
+                            bgcolor: '#2a2a2a'
+                          }}
+                        >
+                          <IconButton
+                            size="small"
+                            onClick={() => onDecrementar(idx)}
+                            disabled={qty <= 1}
+                          >
+                            <Remove fontSize="small" />
+                          </IconButton>
+
+                          <Typography mx={0.5}>{qty}</Typography>
+
+                          <IconButton
+                            size="small"
+                            onClick={() => onIncrementar(idx)}
+                          >
+                            <Add fontSize="small" />
+                          </IconButton>
+                        </Box>
+                      </Box>
+
+                      {/* Jornadas */}
+                      <Box display="flex" flexDirection="column" alignItems="center">
+                        <Typography variant="caption" color="gray">
+                          Jornadas
+                        </Typography>
+
+                        <Box
+                          display="flex"
+                          alignItems="center"
+                          sx={{
+                            border: '1px dashed gray',
+                            borderRadius: 1,
+                            p: '2px 4px',
+                            bgcolor: '#2a2a2a'
+                          }}
+                        >
+                          <IconButton
+                            size="small"
+                            onClick={() =>
+                              setJornadasMap(prev => ({
+                                ...prev,
+                                [idx]: Math.max(1, j - 1)
+                              }))
+                            }
+                          >
+                            <Remove fontSize="small" />
+                          </IconButton>
+
+                          <Typography mx={0.5}>{j}</Typography>
+
+                          <IconButton
+                            size="small"
+                            onClick={() =>
+                              setJornadasMap(prev => ({
+                                ...prev,
+                                [idx]: j + 1
+                              }))
+                            }
+                          >
+                            <Add fontSize="small" />
+                          </IconButton>
+                        </Box>
                       </Box>
                     </Box>
                   </Box>
@@ -337,8 +441,9 @@ export default function Carrito({
           )}
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" color="success" onClick={handleAccept}>Aceptar</Button>
-          <Button onClick={() => setOpenIncludes(false)}>Cerrar</Button>
+          <Button variant="contained" color="success" onClick={() => setOpenIncludes(false)}>
+            Aceptar
+          </Button>
         </DialogActions>
       </Dialog>
     </Paper>

@@ -258,7 +258,7 @@ export default function ProductosPOS() {
       nombre: (clienteForm.nombre || '').trim(),
     };
 
-    generarRemitoPDF(clienteParaPDF, carrito, nro, nro, jornadasMap,);
+    generarRemitoPDF(clienteParaPDF, carrito, nro, nro, jornadasMap);
   };
 
   const handleGenerarPresupuesto = () => {
@@ -307,7 +307,7 @@ export default function ProductosPOS() {
         bgcolor: 'grey.900',
       }}
     >
-      {/* HEADER: nombre (izq) + buscador (centro) + logo (der) */}
+      {/* HEADER: nombre + fechas (izq) + buscador (centro) + logo (der) */}
       <Box
         sx={{
           position: 'fixed',
@@ -324,30 +324,68 @@ export default function ProductosPOS() {
         }}
       >
         <Box sx={{ width: '100%', position: 'relative', height: '100%' }}>
-          {/* Nombre cliente (izquierda) */}
+          {/* Nombre + fechas (izquierda) */}
           <Box
             sx={{
               position: 'absolute',
               left: 20,
               top: '50%',
               transform: 'translateY(-50%)',
-              width: '20vw',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
             }}
           >
             <TextField
               size="small"
               variant="outlined"
-              placeholder="Nombre"
+              label="Nombre"
+              name="nombre"
               value={clienteForm.nombre || ''}
-              onChange={(e) =>
-                setClienteForm((prev) => ({ ...prev, nombre: e.target.value }))
-              }
+              onChange={handleClienteChange}
               InputLabelProps={{ shrink: true }}
               sx={{
                 bgcolor: 'grey.800',
                 borderRadius: 1,
                 '& .MuiOutlinedInput-input': { color: '#fff' },
                 '& .MuiInputLabel-root': { color: '#bbb' },
+                minWidth: 180,
+              }}
+            />
+
+            <TextField
+              size="small"
+              variant="outlined"
+              label="Fecha retiro"
+              name="fechaRetiro"
+              type="datetime-local"
+              value={clienteForm.fechaRetiro || ''}
+              onChange={handleClienteChange}
+              InputLabelProps={{ shrink: true }}
+              sx={{
+                bgcolor: 'grey.800',
+                borderRadius: 1,
+                '& .MuiOutlinedInput-input': { color: '#fff' },
+                '& .MuiInputLabel-root': { color: '#bbb' },
+                minWidth: 210,
+              }}
+            />
+
+            <TextField
+              size="small"
+              variant="outlined"
+              label="Fecha devolución"
+              name="fechaDevolucion"
+              type="datetime-local"
+              value={clienteForm.fechaDevolucion || ''}
+              onChange={handleClienteChange}
+              InputLabelProps={{ shrink: true }}
+              sx={{
+                bgcolor: 'grey.800',
+                borderRadius: 1,
+                '& .MuiOutlinedInput-input': { color: '#fff' },
+                '& .MuiInputLabel-root': { color: '#bbb' },
+                minWidth: 210,
               }}
             />
           </Box>
@@ -594,52 +632,7 @@ export default function ProductosPOS() {
         </DialogActions>
       </Dialog>
 
-      {/* Diálogo Datos del Cliente */}
-      <Dialog
-        open={openCliente}
-        onClose={handleCloseCliente}
-        fullWidth
-        maxWidth="md"
-      >
-        <DialogTitle>Datos del Cliente</DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2}>
-            {/* Fecha Retiro */}
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                size="small"
-                variant="outlined"
-                name="fechaRetiro"
-                label="Fecha Retiro"
-                type="datetime-local"
-                InputLabelProps={{ shrink: true }}
-                value={clienteForm.fechaRetiro || ''}
-                onChange={handleClienteChange}
-              />
-            </Grid>
-
-            {/* Fecha Devolución */}
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                size="small"
-                variant="outlined"
-                name="fechaDevolucion"
-                label="Fecha Devolución"
-                type="datetime-local"
-                InputLabelProps={{ shrink: true }}
-                value={clienteForm.fechaDevolucion || ''}
-                onChange={handleClienteChange}
-              />
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleSaveCliente} variant="contained">
-            Guardar</Button>
-        </DialogActions>
-      </Dialog>
+     
 
       {/* Diálogo selección de serie */}
       <Dialog open={openSerialDialog} onClose={handleCloseSerialDialog}>
