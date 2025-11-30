@@ -27,8 +27,6 @@ export default function Carrito({
   setJornadasMap,
   pedidoNumero,
   setPedidoNumero,
-  comentario,
-  setComentario,
   grupoActual,
   setGrupoActual,
   onClearAll
@@ -132,20 +130,7 @@ export default function Carrito({
           }}
         />
 
-        <TextField
-          size="small"
-          placeholder="Comentario…"
-          value={comentario}
-          onChange={(e) => setComentario(e.target.value)}
-          sx={{
-            flex: 1,
-            minWidth: 140,
-            bgcolor: '#2c2c2c',
-            borderRadius: 1,
-            '& .MuiOutlinedInput-notchedOutline': { borderColor: '#555' },
-            '& .MuiInputBase-input': { color: '#fff', py: '6px' }
-          }}
-        />
+        
 
         <IconButton size="small" onClick={() => setOpenIncludes(true)}>
           <MoreVert sx={{ color: '#fff' }} />

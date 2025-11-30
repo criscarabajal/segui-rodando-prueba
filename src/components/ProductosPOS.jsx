@@ -240,7 +240,6 @@ export default function ProductosPOS() {
   };
 
   const handleSaveCliente = () => {
-    // Ya no es obligatorio completar nombre/fechas para cerrar
     setCliente(clienteForm);
     setOpenCliente(false);
   };
@@ -274,10 +273,7 @@ export default function ProductosPOS() {
       nombre: (clienteForm.nombre || '').trim(),
     };
 
-    // (cliente, productosSeleccionados, jornadasMap, fechaEmision, pedidoNumero)
     generarPresupuestoPDF(clienteParaPDF, carrito, jornadasMap, fecha, nro);
-
-    // 👇 Reiniciar contador de jornadas en "Detalles de productos"
     setJornadasMap({});
   };
 
@@ -294,7 +290,6 @@ export default function ProductosPOS() {
       nombre: (clienteForm.nombre || '').trim(),
     };
 
-    // (cliente, productosSeleccionados, atendidoPor, numeroSeguro, pedidoNumero, jornadasMap)
     generarSeguroPDF(clienteParaPDF, carrito, fecha, nro, nro, jornadasMap);
   };
 
@@ -307,7 +302,7 @@ export default function ProductosPOS() {
         bgcolor: 'grey.900',
       }}
     >
-      {/* HEADER: nombre + fechas (izq) + buscador (centro) + logo (der) */}
+      {/* HEADER: nombre + fechas + buscador centrado + logo a la derecha */}
       <Box
         sx={{
           position: 'fixed',
@@ -318,79 +313,97 @@ export default function ProductosPOS() {
           bgcolor: 'grey.900',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
           px: 2,
           zIndex: 1200,
         }}
       >
-        <Box sx={{ width: '100%', position: 'relative', height: '100%' }}>
-          {/* Nombre + fechas (izquierda) */}
+        <Box
+          sx={{
+            width: '100%',
+            maxWidth: '1920px',
+            mx: 'auto',
+            position: 'relative',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+          }}
+        >
+          {/* Bloque izquierdo: Nombre + Fechas */}
           <Box
             sx={{
-              position: 'absolute',
-              left: 20,
-              top: '50%',
-              transform: 'translateY(-50%)',
               display: 'flex',
               alignItems: 'center',
-              gap: 1,
+              gap: 1.5,
             }}
           >
+            {/* Nombre cliente */}
             <TextField
               size="small"
               variant="outlined"
-              label="Nombre"
-              name="nombre"
+              placeholder="Nombre"
               value={clienteForm.nombre || ''}
-              onChange={handleClienteChange}
+              onChange={(e) =>
+                setClienteForm((prev) => ({ ...prev, nombre: e.target.value }))
+              }
               InputLabelProps={{ shrink: true }}
               sx={{
+                minWidth: 140,
+                maxWidth: 220,
                 bgcolor: 'grey.800',
                 borderRadius: 1,
                 '& .MuiOutlinedInput-input': { color: '#fff' },
                 '& .MuiInputLabel-root': { color: '#bbb' },
-                minWidth: 180,
               }}
             />
 
+            {/* Fecha Retiro */}
             <TextField
               size="small"
               variant="outlined"
-              label="Fecha retiro"
-              name="fechaRetiro"
               type="datetime-local"
+              label="Retiro"
+              name="fechaRetiro"
+              InputLabelProps={{ shrink: true }}
               value={clienteForm.fechaRetiro || ''}
               onChange={handleClienteChange}
-              InputLabelProps={{ shrink: true }}
               sx={{
+                minWidth: 170,
+                maxWidth: 230,
                 bgcolor: 'grey.800',
                 borderRadius: 1,
-                '& .MuiOutlinedInput-input': { color: '#fff' },
+                '& .MuiOutlinedInput-input': {
+                  color: '#fff',
+                  fontSize: '0.75rem',
+                },
                 '& .MuiInputLabel-root': { color: '#bbb' },
-                minWidth: 210,
               }}
             />
 
+            {/* Fecha Devolución */}
             <TextField
               size="small"
               variant="outlined"
-              label="Fecha devolución"
-              name="fechaDevolucion"
               type="datetime-local"
+              label="Devolución"
+              name="fechaDevolucion"
+              InputLabelProps={{ shrink: true }}
               value={clienteForm.fechaDevolucion || ''}
               onChange={handleClienteChange}
-              InputLabelProps={{ shrink: true }}
               sx={{
+                minWidth: 170,
+                maxWidth: 230,
                 bgcolor: 'grey.800',
                 borderRadius: 1,
-                '& .MuiOutlinedInput-input': { color: '#fff' },
+                '& .MuiOutlinedInput-input': {
+                  color: '#fff',
+                  fontSize: '0.75rem',
+                },
                 '& .MuiInputLabel-root': { color: '#bbb' },
-                minWidth: 210,
               }}
             />
           </Box>
 
-          {/* Buscador (centro) */}
+          {/* Buscador centrado en el viewport */}
           <Box
             sx={{
               position: 'absolute',
@@ -412,17 +425,25 @@ export default function ProductosPOS() {
                   </InputAdornment>
                 ),
               }}
-              sx={{ width: '28vw', bgcolor: 'grey.800', borderRadius: 1 }}
+              sx={{
+                width: '28vw',
+                minWidth: 260,
+                maxWidth: 480,
+                bgcolor: 'grey.800',
+                borderRadius: 1,
+              }}
             />
           </Box>
 
-          {/* Logo (derecha) */}
+          {/* Logo pegado al borde derecho */}
           <Box
             sx={{
               position: 'absolute',
               right: 20,
               top: '50%',
               transform: 'translateY(-50%)',
+              display: 'flex',
+              alignItems: 'center',
             }}
           >
             <img
@@ -474,18 +495,16 @@ export default function ProductosPOS() {
             c.splice(i, 1);
             setCarrito(c);
 
-            // 🔁 Reindexar jornadasMap para que los índices sigan matcheando
             setJornadasMap((prev) => {
               const next = {};
               Object.keys(prev).forEach((kStr) => {
                 const k = parseInt(kStr, 10);
                 if (Number.isNaN(k)) return;
                 if (k < i) {
-                  next[k] = prev[k]; // mismos índices antes del borrado
+                  next[k] = prev[k];
                 } else if (k > i) {
-                  next[k - 1] = prev[k]; // corremos uno hacia atrás
+                  next[k - 1] = prev[k];
                 }
-                // si k === i lo saltamos (era el que se borró)
               });
               return next;
             });
@@ -498,7 +517,7 @@ export default function ProductosPOS() {
           setGrupoActual={setGrupoActual}
           onClearAll={() => {
             setCarrito([]);
-            setJornadasMap({}); // 🧹 limpias también las jornadas
+            setJornadasMap({});
           }}
         />
       </Box>
@@ -632,7 +651,53 @@ export default function ProductosPOS() {
         </DialogActions>
       </Dialog>
 
-     
+      {/* Diálogo Datos del Cliente */}
+      <Dialog
+        open={openCliente}
+        onClose={handleCloseCliente}
+        fullWidth
+        maxWidth="md"
+      >
+        <DialogTitle>Datos del Cliente</DialogTitle>
+        <DialogContent>
+          <Grid container spacing={2}>
+            {/* Fecha Retiro */}
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                size="small"
+                variant="outlined"
+                name="fechaRetiro"
+                label="Fecha Retiro"
+                type="datetime-local"
+                InputLabelProps={{ shrink: true }}
+                value={clienteForm.fechaRetiro || ''}
+                onChange={handleClienteChange}
+              />
+            </Grid>
+
+            {/* Fecha Devolución */}
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                size="small"
+                variant="outlined"
+                name="fechaDevolucion"
+                label="Fecha Devolución"
+                type="datetime-local"
+                InputLabelProps={{ shrink: true }}
+                value={clienteForm.fechaDevolucion || ''}
+                onChange={handleClienteChange}
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleSaveCliente} variant="contained">
+            Guardar
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Diálogo selección de serie */}
       <Dialog open={openSerialDialog} onClose={handleCloseSerialDialog}>
