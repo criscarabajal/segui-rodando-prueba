@@ -302,162 +302,139 @@ export default function ProductosPOS() {
         bgcolor: 'grey.900',
       }}
     >
-      {/* HEADER: nombre + fechas + buscador centrado + logo a la derecha */}
-      <Box
+      {/* HEADER: nombre + fechas a la izquierda / buscador + logo a la derecha */}
+<Box
+  sx={{
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: HEADER,
+    bgcolor: 'grey.900',
+    display: 'flex',
+    alignItems: 'center',
+    px: 2,
+    zIndex: 1200,
+  }}
+>
+  <Box
+    sx={{
+      width: '100%',
+      maxWidth: '1920px',
+      mx: 'auto',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    }}
+  >
+    {/* Izquierda: Nombre + Fechas */}
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+      {/* Nombre */}
+      <TextField
+        size="small"
+        variant="outlined"
+        placeholder="Nombre"
+        value={clienteForm.nombre || ''}
+        onChange={(e) =>
+          setClienteForm((prev) => ({ ...prev, nombre: e.target.value }))
+        }
+        InputLabelProps={{ shrink: true }}
         sx={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: HEADER,
-          bgcolor: 'grey.900',
-          display: 'flex',
-          alignItems: 'center',
-          px: 2,
-          zIndex: 1200,
+          minWidth: 140,
+          maxWidth: 220,
+          bgcolor: 'grey.800',
+          borderRadius: 1,
+          '& .MuiOutlinedInput-input': { color: '#fff' },
+          '& .MuiInputLabel-root': { color: '#bbb' },
         }}
-      >
-        <Box
-          sx={{
-            width: '100%',
-            maxWidth: '1920px',
-            mx: 'auto',
-            position: 'relative',
-            height: '100%',
-            display: 'flex',
-            alignItems: 'center',
-          }}
-        >
-          {/* Bloque izquierdo: Nombre + Fechas */}
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1.5,
-            }}
-          >
-            {/* Nombre cliente */}
-            <TextField
-              size="small"
-              variant="outlined"
-              placeholder="Nombre"
-              value={clienteForm.nombre || ''}
-              onChange={(e) =>
-                setClienteForm((prev) => ({ ...prev, nombre: e.target.value }))
-              }
-              InputLabelProps={{ shrink: true }}
-              sx={{
-                minWidth: 140,
-                maxWidth: 220,
-                bgcolor: 'grey.800',
-                borderRadius: 1,
-                '& .MuiOutlinedInput-input': { color: '#fff' },
-                '& .MuiInputLabel-root': { color: '#bbb' },
-              }}
-            />
+      />
 
-            {/* Fecha Retiro */}
-            <TextField
-              size="small"
-              variant="outlined"
-              type="datetime-local"
-              label="Retiro"
-              name="fechaRetiro"
-              InputLabelProps={{ shrink: true }}
-              value={clienteForm.fechaRetiro || ''}
-              onChange={handleClienteChange}
-              sx={{
-                minWidth: 170,
-                maxWidth: 230,
-                bgcolor: 'grey.800',
-                borderRadius: 1,
-                '& .MuiOutlinedInput-input': {
-                  color: '#fff',
-                  fontSize: '0.75rem',
-                },
-                '& .MuiInputLabel-root': { color: '#bbb' },
-              }}
-            />
+      {/* Fecha Retiro */}
+      <TextField
+        size="small"
+        variant="outlined"
+        type="datetime-local"
+        label="Retiro"
+        name="fechaRetiro"
+        InputLabelProps={{ shrink: true }}
+        value={clienteForm.fechaRetiro || ''}
+        onChange={handleClienteChange}
+        sx={{
+          minWidth: 170,
+          maxWidth: 230,
+          bgcolor: 'grey.800',
+          borderRadius: 1,
+          '& .MuiOutlinedInput-input': {
+            color: '#fff',
+            fontSize: '0.75rem',
+          },
+          '& .MuiInputLabel-root': { color: '#bbb' },
+        }}
+      />
 
-            {/* Fecha Devolución */}
-            <TextField
-              size="small"
-              variant="outlined"
-              type="datetime-local"
-              label="Devolución"
-              name="fechaDevolucion"
-              InputLabelProps={{ shrink: true }}
-              value={clienteForm.fechaDevolucion || ''}
-              onChange={handleClienteChange}
-              sx={{
-                minWidth: 170,
-                maxWidth: 230,
-                bgcolor: 'grey.800',
-                borderRadius: 1,
-                '& .MuiOutlinedInput-input': {
-                  color: '#fff',
-                  fontSize: '0.75rem',
-                },
-                '& .MuiInputLabel-root': { color: '#bbb' },
-              }}
-            />
-          </Box>
+      {/* Fecha Devolución */}
+      <TextField
+        size="small"
+        variant="outlined"
+        type="datetime-local"
+        label="Devolución"
+        name="fechaDevolucion"
+        InputLabelProps={{ shrink: true }}
+        value={clienteForm.fechaDevolucion || ''}
+        onChange={handleClienteChange}
+        sx={{
+          minWidth: 170,
+          maxWidth: 230,
+          bgcolor: 'grey.800',
+          borderRadius: 1,
+          '& .MuiOutlinedInput-input': {
+            color: '#fff',
+            fontSize: '0.75rem',
+          },
+          '& .MuiInputLabel-root': { color: '#bbb' },
+        }}
+      />
+    </Box>
 
-          {/* Buscador centrado en el viewport */}
-          <Box
-            sx={{
-              position: 'absolute',
-              left: '50%',
-              top: '50%',
-              transform: 'translate(-50%, -50%)',
-            }}
-          >
-            <TextField
-              size="small"
-              variant="outlined"
-              placeholder="Buscar producto"
-              value={buscar}
-              onChange={(e) => setBuscar(e.target.value)}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{
-                width: '28vw',
-                minWidth: 260,
-                maxWidth: 480,
-                bgcolor: 'grey.800',
-                borderRadius: 1,
-              }}
-            />
-          </Box>
+    {/* Derecha: Buscador + Logo */}
+    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+      {/* Buscador */}
+      <TextField
+        size="small"
+        variant="outlined"
+        placeholder="Buscar producto"
+        value={buscar}
+        onChange={(e) => setBuscar(e.target.value)}
+        InputProps={{
+          endAdornment: (
+            <InputAdornment position="end">
+              <SearchIcon />
+            </InputAdornment>
+          ),
+        }}
+        sx={{
+          width: '20vw',
+          minWidth: 200,
+          maxWidth: 350,
+          bgcolor: 'grey.800',
+          borderRadius: 1,
+          marginRight: '3px',   // 👈 separación exacta
+        }}
+      />
 
-          {/* Logo pegado al borde derecho */}
-          <Box
-            sx={{
-              position: 'absolute',
-              right: 20,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              display: 'flex',
-              alignItems: 'center',
-            }}
-          >
-            <img
-              src={logoImg}
-              alt="logo"
-              style={{
-                height: '70px',
-                padding: '8px 0',
-                opacity: 0.9,
-              }}
-            />
-          </Box>
-        </Box>
-      </Box>
+      {/* Logo */}
+      <img
+        src={logoImg}
+        alt="logo"
+        style={{
+          height: '65px',
+          opacity: 0.9,
+        }}
+      />
+    </Box>
+  </Box>
+</Box>
+
 
       {/* Carrito */}
       <Box

@@ -223,12 +223,23 @@ export default function Carrito({
           value={discount}
           onChange={e => setDiscount(e.target.value)}
           SelectProps={{
-            MenuProps: {
-              PaperProps: {
-                sx: { transform: 'translateY(-80%)' }  // despliega hacia arriba
-              }
-            }
-          }}
+    MenuProps: {
+      anchorOrigin: {
+        vertical: 'bottom',
+        horizontal: 'left',
+      },
+      transformOrigin: {
+        vertical: 'bottom',
+        horizontal: 'left',
+      },
+      getContentAnchorEl: null, // importante en MUI v4 (ignorado en MUI v5)
+      PaperProps: {
+        sx: {
+          mt: '-8px',     // empuja el menú hacia arriba visualmente
+        }
+      }
+    }
+  }}
           sx={{ bgcolor: '#2c2c2c', borderRadius: 1 }}
         >
           <MenuItem value="0">Ninguno</MenuItem>
